@@ -1,0 +1,35 @@
+pipeline {
+    agent any 
+    
+    stages{
+        stage('Code'){
+            steps{
+                echo "Cloning Github repo"
+                git url:'https://github.com/AnasAnsari94/Node-todo-app.git',branch: 'master'
+            }
+        }
+        stage('Build'){
+            steps{
+                sh 'docker build . -t anas242/node-todo-app:latest'
+            }
+        }
+        stage('Push'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'dockerHubPassword',  usernameVariable: 'dockerHubUser')]) {
+                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+                    sh 'docker push anas242/node-todo-app:latest'
+                }
+            }
+        }
+        stage('Test'){
+            steps{
+                echo "Testing The New Build"
+            }
+        }
+        stage('Deploy'){
+            steps{
+               sh 'docker-compose down && docker-compose up -d'
+            }
+        }
+    }
+}
